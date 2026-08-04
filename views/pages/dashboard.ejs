@@ -1,0 +1,373 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+<%- include('../partials/navbar') %>
+
+<main class="ml-64 pt-20 p-8 min-h-screen flex-1 relative z-10">
+    <!-- Header Page Banner -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-3xl font-extrabold text-zinc-950 tracking-tight flex items-center gap-3">
+                <span>Bom dia, Ana Silva 👋</span>
+                <span class="text-xs bg-zinc-950 text-white border border-zinc-950 px-3 py-1 rounded-full font-mono font-bold shadow-sm">GerêncieJá Realtime</span>
+            </h2>
+            <p class="text-zinc-500 text-xs mt-1.5 leading-relaxed">Acompanhe a vazão de entregas, métricas ágeis e projetos ativos da sua organização.</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="/reports" class="px-4 py-2.5 bg-white hover:bg-zinc-100 border border-zinc-200/90 rounded-2xl text-xs font-semibold text-zinc-800 transition-all flex items-center gap-2 shadow-xs">
+                <i data-lucide="file-text" class="w-4 h-4 text-zinc-500"></i>
+                <span>Exportar Relatórios</span>
+            </a>
+            <button onclick="openNewProjectModal()" class="px-4 py-2.5 bg-zinc-950 text-white hover:bg-zinc-800 rounded-2xl text-xs font-bold shadow-lg shadow-zinc-950/15 transition-all flex items-center gap-2">
+                <i data-lucide="plus" class="w-4 h-4 text-[#A3E635]"></i>
+                <span>Criar Projeto</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Top General Overview Stat Cards (Floating Rounded-3xl Cards) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="card-saas p-6 relative overflow-hidden bg-white rounded-3xl">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Projetos Ativos</span>
+                <div class="w-10 h-10 rounded-2xl bg-zinc-950 text-white flex items-center justify-center shadow-md">
+                    <i data-lucide="folder-kanban" class="w-5 h-5 text-[#A3E635]"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-baseline gap-2">
+                <span class="text-4xl font-extrabold text-zinc-950 font-sans tracking-tight"><%= metrics.activeProjects %></span>
+                <span class="text-xs text-zinc-400 font-medium">de <%= metrics.totalProjects %> totais</span>
+            </div>
+            <div class="mt-4 w-full bg-zinc-100 rounded-full h-2 overflow-hidden">
+                <div class="bg-zinc-950 h-2 rounded-full" style="width: <%= metrics.totalProjects > 0 ? (metrics.activeProjects / metrics.totalProjects) * 100 : 0 %>%"></div>
+            </div>
+        </div>
+
+        <div class="card-saas p-6 relative overflow-hidden bg-white rounded-3xl">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Tarefas Concluídas</span>
+                <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center justify-center">
+                    <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-baseline gap-2">
+                <span class="text-4xl font-extrabold text-zinc-950 font-sans tracking-tight"><%= metrics.completedTasks %></span>
+                <span class="text-xs text-zinc-400 font-medium">de <%= metrics.totalTasks %> tarefas</span>
+            </div>
+            <div class="mt-4 w-full bg-zinc-100 rounded-full h-2 overflow-hidden">
+                <div class="bg-emerald-500 h-2 rounded-full" style="width: <%= metrics.totalTasks > 0 ? (metrics.completedTasks / metrics.totalTasks) * 100 : 0 %>%"></div>
+            </div>
+        </div>
+
+        <div class="card-saas p-6 relative overflow-hidden bg-white rounded-3xl">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Membros de Equipe</span>
+                <div class="w-10 h-10 rounded-2xl bg-sky-500/10 text-sky-600 border border-sky-500/20 flex items-center justify-center">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-baseline gap-2">
+                <span class="text-4xl font-extrabold text-zinc-950 font-sans tracking-tight"><%= metrics.totalMembers %></span>
+                <span class="text-xs text-zinc-400 font-medium">especialistas</span>
+            </div>
+            <div class="mt-4 flex items-center gap-1.5 text-[11px] text-sky-600 font-bold">
+                <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+                <span>Alocados em projetos</span>
+            </div>
+        </div>
+
+        <div class="card-saas p-6 relative overflow-hidden bg-white rounded-3xl">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Sprints Ativas</span>
+                <div class="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 border border-amber-500/20 flex items-center justify-center">
+                    <i data-lucide="zap" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-baseline gap-2">
+                <span class="text-4xl font-extrabold text-zinc-950 font-sans tracking-tight"><%= metrics.activeSprints %></span>
+                <span class="text-xs text-zinc-400 font-medium">em execução</span>
+            </div>
+            <div class="mt-4 flex items-center gap-1.5 text-[11px] text-amber-600 font-bold">
+                <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                <span>Ciclos ágeis ativos</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section: KPIs Ágeis Calculados -->
+    <div class="mb-8">
+        <h3 class="font-extrabold text-zinc-950 text-lg mb-4 flex items-center gap-2">
+            <i data-lucide="activity" class="w-4 h-4 text-zinc-500"></i>
+            Indicadores GerênciaJá de Performance
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="card-saas p-6 rounded-3xl">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Lead Time Médio</span>
+                    <i data-lucide="clock" class="w-4 h-4 text-zinc-400"></i>
+                </div>
+                <div class="mt-3 flex items-baseline gap-2">
+                    <span class="text-3xl font-extrabold text-zinc-950 font-mono"><%= agileKPIs.leadTime %></span>
+                    <span class="text-xs text-zinc-400 font-medium">dias</span>
+                </div>
+                <p class="text-[11px] text-zinc-500 mt-2 leading-relaxed">Da criação até o deploy.</p>
+            </div>
+
+            <div class="card-saas p-6 rounded-3xl">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Cycle Time Médio</span>
+                    <i data-lucide="refresh-cw" class="w-4 h-4 text-emerald-500"></i>
+                </div>
+                <div class="mt-3 flex items-baseline gap-2">
+                    <span class="text-3xl font-extrabold text-emerald-600 font-mono"><%= agileKPIs.cycleTime %></span>
+                    <span class="text-xs text-zinc-400 font-medium">dias</span>
+                </div>
+                <p class="text-[11px] text-zinc-500 mt-2 leading-relaxed">Trabalho ativo em execução.</p>
+            </div>
+
+            <div class="card-saas p-6 rounded-3xl">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Velocity</span>
+                    <i data-lucide="trending-up" class="w-4 h-4 text-sky-500"></i>
+                </div>
+                <div class="mt-3 flex items-baseline gap-2">
+                    <span class="text-3xl font-extrabold text-sky-600 font-mono"><%= agileKPIs.velocity %></span>
+                    <span class="text-xs text-zinc-400 font-medium">pts / sprint</span>
+                </div>
+                <p class="text-[11px] text-zinc-500 mt-2 leading-relaxed">Capacidade média de entrega.</p>
+            </div>
+
+            <div class="card-saas p-6 rounded-3xl">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Throughput</span>
+                    <i data-lucide="layers" class="w-4 h-4 text-zinc-400"></i>
+                </div>
+                <div class="mt-3 flex items-baseline gap-2">
+                    <span class="text-3xl font-extrabold text-zinc-950 font-mono"><%= agileKPIs.throughput %></span>
+                    <span class="text-xs text-zinc-400 font-medium">tarefas / sprint</span>
+                </div>
+                <p class="text-[11px] text-zinc-500 mt-2 leading-relaxed">Vazão constante por ciclo.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section: Gráficos Interativos do Chart.js -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div class="card-saas p-6 rounded-3xl">
+            <h4 class="font-bold text-zinc-950 text-sm mb-4 flex items-center gap-2">
+                <i data-lucide="pie-chart" class="w-4 h-4 text-zinc-500"></i>
+                Distribuição de Status
+            </h4>
+            <div class="h-64 relative flex items-center justify-center">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card-saas p-6 rounded-3xl">
+            <h4 class="font-bold text-zinc-950 text-sm mb-4 flex items-center gap-2">
+                <i data-lucide="bar-chart-3" class="w-4 h-4 text-zinc-500"></i>
+                Tarefas por Prioridade
+            </h4>
+            <div class="h-64 relative">
+                <canvas id="priorityChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card-saas p-6 rounded-3xl">
+            <h4 class="font-bold text-zinc-950 text-sm mb-4 flex items-center gap-2">
+                <i data-lucide="flame" class="w-4 h-4 text-rose-500"></i>
+                BurnDown da Sprint Ativa
+            </h4>
+            <div class="h-64 relative">
+                <canvas id="burndownChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section: Projects & Activity Logs -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Recent Projects Table -->
+        <div class="lg:col-span-2 card-saas p-6 rounded-3xl">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="font-bold text-zinc-950 text-base flex items-center gap-2">
+                        <i data-lucide="folder" class="w-4 h-4 text-zinc-500"></i>
+                        Projetos Recentes
+                    </h3>
+                    <p class="text-xs text-zinc-500">Acompanhamento dos últimos projetos alterados</p>
+                </div>
+                <a href="/projects" class="text-xs font-bold text-zinc-950 hover:underline flex items-center gap-1">
+                    Ver Todos <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                </a>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-zinc-700">
+                    <thead class="bg-zinc-100 text-zinc-500 uppercase font-bold text-[10px] tracking-wider border-b border-zinc-200/80">
+                        <tr>
+                            <th class="py-3 px-4">Projeto</th>
+                            <th class="py-3 px-4">Categoria</th>
+                            <th class="py-3 px-4">Líder</th>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4 text-right">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-200/60">
+                        <% if (metrics.recentProjects && metrics.recentProjects.length > 0) { %>
+                            <% metrics.recentProjects.forEach(p => { %>
+                                <tr class="hover:bg-zinc-50 transition-colors">
+                                    <td class="py-3.5 px-4 font-bold text-zinc-950 flex items-center gap-2.5">
+                                        <span class="px-2 py-0.5 rounded-md bg-zinc-950 text-white font-mono text-[10px] font-bold"><%= p.key %></span>
+                                        <a href="/projects/<%= p.id %>" class="hover:underline truncate max-w-[180px]"><%= p.name %></a>
+                                    </td>
+                                    <td class="py-3.5 px-4 text-zinc-500"><%= p.category %></td>
+                                    <td class="py-3.5 px-4 text-zinc-700 font-medium"><%= p.owner_name || 'Nenhum' %></td>
+                                    <td class="py-3.5 px-4">
+                                        <% if (p.status === 'Em Andamento') { %>
+                                            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 text-[10px] font-bold">Em Andamento</span>
+                                        <% } else if (p.status === 'Concluído') { %>
+                                            <span class="px-2.5 py-0.5 rounded-full bg-sky-500/10 text-sky-700 border border-sky-500/20 text-[10px] font-bold">Concluído</span>
+                                        <% } else if (p.status === 'Pausado') { %>
+                                            <span class="px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 border border-amber-500/20 text-[10px] font-bold">Pausado</span>
+                                        <% } else { %>
+                                            <span class="px-2.5 py-0.5 rounded-full bg-zinc-200 text-zinc-700 border border-zinc-300 text-[10px] font-bold">Planejamento</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="py-3.5 px-4 text-right">
+                                        <a href="/projects/<%= p.id %>" class="p-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition-colors inline-flex items-center justify-center">
+                                            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Activity History -->
+        <div class="card-saas p-6 rounded-3xl flex flex-col">
+            <div class="mb-6">
+                <h3 class="font-bold text-zinc-950 text-base flex items-center gap-2">
+                    <i data-lucide="history" class="w-4 h-4 text-zinc-500"></i>
+                    Atividades Recentes
+                </h3>
+                <p class="text-xs text-zinc-500">Histórico de alterações em tempo real</p>
+            </div>
+
+            <div class="flex-1 space-y-4 overflow-y-auto pr-1 max-h-[380px]">
+                <% if (metrics.recentActivities && metrics.recentActivities.length > 0) { %>
+                    <% metrics.recentActivities.forEach(act => { %>
+                        <div class="flex gap-3 text-xs pb-3.5 border-b border-zinc-200/70 last:border-0">
+                            <div class="w-8 h-8 rounded-2xl bg-zinc-950 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                <i data-lucide="zap" class="w-4 h-4 text-[#A3E635]"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-zinc-950"><%= act.action %></p>
+                                <p class="text-[11px] text-zinc-500 mt-0.5 leading-normal"><%= act.details %></p>
+                                <div class="flex items-center gap-2 mt-1 text-[10px] text-zinc-400 font-mono">
+                                    <span class="font-bold text-zinc-700"><%= act.user_name %></span>
+                                    <span>•</span>
+                                    <span><%= formatDate(act.created_at) %></span>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const chartData = <%- JSON.stringify(metrics.chartData) %>;
+        const burndownData = <%- JSON.stringify(agileKPIs.burndown) %>;
+
+        // Chart 1: Status Doughnut
+        new Chart(document.getElementById('statusChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(chartData.tasksByStatus),
+                datasets: [{
+                    data: Object.values(chartData.tasksByStatus),
+                    backgroundColor: ['#27272A', '#0284C7', '#D97706', '#9333EA', '#059669'],
+                    borderColor: '#FFFFFF',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#3F3F46', font: { size: 10, weight: 'bold' } } }
+                }
+            }
+        });
+
+        // Chart 2: Priority Bar Chart
+        new Chart(document.getElementById('priorityChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(chartData.tasksByPriority),
+                datasets: [{
+                    label: 'Quantidade',
+                    data: Object.values(chartData.tasksByPriority),
+                    backgroundColor: ['#71717A', '#0284C7', '#D97706', '#E11D48'],
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#3F3F46', font: { size: 10, weight: 'bold' } }, grid: { display: false } },
+                    y: { ticks: { color: '#3F3F46', font: { size: 10 }, stepSize: 1 }, grid: { color: '#F4F4F5' } }
+                }
+            }
+        });
+
+        // Chart 3: Burndown Line Chart
+        new Chart(document.getElementById('burndownChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: burndownData.labels || ['Dia 1', 'Dia 3', 'Dia 5', 'Dia 8', 'Dia 10', 'Dia 14'],
+                datasets: [
+                    {
+                        label: 'Linha Ideal',
+                        data: burndownData.ideal || [20, 16, 12, 8, 4, 0],
+                        borderColor: '#A1A1AA',
+                        borderDash: [4, 4],
+                        borderWidth: 1.5,
+                        fill: false
+                    },
+                    {
+                        label: 'Pontos Restantes',
+                        data: burndownData.real || [20, 20, 15, 10, 5, 2],
+                        borderColor: '#E11D48',
+                        backgroundColor: 'rgba(225, 29, 72, 0.08)',
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#3F3F46', font: { size: 10, weight: 'bold' } } }
+                },
+                scales: {
+                    x: { ticks: { color: '#3F3F46', font: { size: 10, weight: 'bold' } }, grid: { display: false } },
+                    y: { ticks: { color: '#3F3F46', font: { size: 10 } }, grid: { color: '#F4F4F5' } }
+                }
+            }
+        });
+    });
+</script>
+
+<%- include('../partials/footer') %>

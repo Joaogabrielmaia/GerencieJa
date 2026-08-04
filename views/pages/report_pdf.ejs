@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title><%= title %></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-8 font-sans">
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-md border border-slate-200">
+        <!-- Header Document -->
+        <div class="flex items-center justify-between border-b pb-6 mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900 tracking-tight">AgilePulse - Relatório Oficial</h1>
+                <p class="text-xs text-slate-500 mt-1">Extraído diretamente do banco de dados SQLite</p>
+            </div>
+            <div class="text-right">
+                <span class="text-xs text-slate-400 block">Gerado em:</span>
+                <span class="text-xs font-mono font-semibold text-slate-700"><%= generatedAt %></span>
+            </div>
+        </div>
+
+        <!-- Print Action Button -->
+        <div class="mb-6 flex justify-end no-print">
+            <button onclick="window.print()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow flex items-center gap-2">
+                🖨️ Imprimir / Salvar em PDF
+            </button>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="grid grid-cols-3 gap-4 mb-6 text-center">
+            <div class="bg-slate-100 p-3 rounded-lg border border-slate-200">
+                <span class="text-[10px] text-slate-500 uppercase font-semibold">Total de Tarefas</span>
+                <p class="text-xl font-bold text-slate-800 mt-0.5"><%= tasks.length %></p>
+            </div>
+            <div class="bg-slate-100 p-3 rounded-lg border border-slate-200">
+                <span class="text-[10px] text-slate-500 uppercase font-semibold">Total Story Points</span>
+                <p class="text-xl font-bold text-indigo-600 mt-0.5"><%= tasks.reduce((sum, t) => sum + (t.story_points || 0), 0) %> pts</p>
+            </div>
+            <div class="bg-slate-100 p-3 rounded-lg border border-slate-200">
+                <span class="text-[10px] text-slate-500 uppercase font-semibold">Tarefas Concluídas</span>
+                <p class="text-xl font-bold text-emerald-600 mt-0.5"><%= tasks.filter(t => t.status === 'Done').length %></p>
+            </div>
+        </div>
+
+        <!-- Document Table -->
+        <table class="w-full text-left text-xs border-collapse">
+            <thead>
+                <tr class="bg-slate-100 border-b border-slate-300 text-slate-600 font-semibold uppercase text-[10px]">
+                    <th class="py-2.5 px-3">ID</th>
+                    <th class="py-2.5 px-3">Projeto</th>
+                    <th class="py-2.5 px-3">Título da Tarefa</th>
+                    <th class="py-2.5 px-3">Status</th>
+                    <th class="py-2.5 px-3">Prioridade</th>
+                    <th class="py-2.5 px-3">Pontos</th>
+                    <th class="py-2.5 px-3">Responsável</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+                <% if (tasks && tasks.length > 0) { %>
+                    <% tasks.forEach(t => { %>
+                        <tr>
+                            <td class="py-2 px-3 font-mono text-slate-500">#<%= t.id %></td>
+                            <td class="py-2 px-3 font-semibold"><%= t.project_key %> - <%= t.project_name %></td>
+                            <td class="py-2 px-3"><%= t.title %></td>
+                            <td class="py-2 px-3"><span class="px-2 py-0.5 bg-slate-200 rounded font-semibold text-[10px]"><%= t.status %></span></td>
+                            <td class="py-2 px-3"><%= t.priority %></td>
+                            <td class="py-2 px-3 font-mono font-bold text-indigo-600"><%= t.story_points %> pts</td>
+                            <td class="py-2 px-3"><%= t.assignee %></td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="7" class="py-6 text-center text-slate-400">Nenhum registro no relatório.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+
+        <div class="mt-8 border-t pt-4 text-center text-[10px] text-slate-400">
+            Relatório gerado automaticamente pelo Sistema de Gerenciamento de Projetos AgilePulse.
+        </div>
+    </div>
+</body>
+</html>

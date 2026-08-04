@@ -1,0 +1,246 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+<%- include('../partials/navbar') %>
+
+<main class="ml-64 pt-20 p-8 min-h-screen flex-1 relative z-10">
+    <!-- Header Banner -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-3xl font-extrabold text-zinc-950 tracking-tight flex items-center gap-3">
+                <span>Gestão da Equipe</span>
+                <span class="text-xs bg-zinc-950 text-white border border-zinc-950 px-3 py-1 rounded-full font-mono font-medium"><%= members.length %> Membros</span>
+            </h2>
+            <p class="text-zinc-500 text-xs mt-1.5 leading-relaxed">Gerencie os integrantes da equipe e suas atribuições nos projetos.</p>
+        </div>
+
+        <button onclick="openNewMemberModal()" class="px-4 py-2.5 bg-zinc-950 text-white hover:bg-zinc-800 rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15 transition-all flex items-center gap-2">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            <span>Cadastrar Membro</span>
+        </button>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="card-saas p-4 mb-8 flex items-center justify-between gap-4">
+        <form action="/team" method="GET" class="flex items-center gap-3 flex-1 max-w-md">
+            <div class="relative w-full">
+                <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400"></i>
+                <input type="text" name="search" value="<%= search %>" placeholder="Pesquisar por nome, e-mail ou cargo..." 
+                       class="w-full bg-white border border-zinc-200 rounded-xl pl-9 pr-3 py-2 text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-zinc-950">
+            </div>
+            <button type="submit" class="px-3.5 py-2 bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 rounded-xl text-xs font-semibold text-zinc-800">
+                Pesquisar
+            </button>
+            <% if (search) { %>
+                <a href="/team" class="text-xs text-zinc-500 hover:text-rose-600 flex items-center gap-1 font-medium">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i> Limpar
+                </a>
+            <% } %>
+        </form>
+    </div>
+
+    <!-- Team Members Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% if (members && members.length > 0) { %>
+            <% members.forEach(m => { %>
+                <div class="card-saas p-6 flex flex-col justify-between relative">
+                    <div>
+                        <div class="flex items-start justify-between gap-3 mb-4">
+                            <div class="flex items-center gap-3">
+                                <img src="<%= m.avatar_url %>" alt="<%= m.name %>" class="w-12 h-12 rounded-full object-cover border border-zinc-300 shadow-xs">
+                                <div>
+                                    <h3 class="font-extrabold text-zinc-950 text-sm"><%= m.name %></h3>
+                                    <span class="px-2.5 py-0.5 rounded-md bg-zinc-100 text-zinc-800 font-semibold text-[11px] border border-zinc-200 inline-block mt-0.5">
+                                        <%= m.role %>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-zinc-500 mb-5 truncate flex items-center gap-1.5 font-medium">
+                            <i data-lucide="mail" class="w-3.5 h-3.5 text-zinc-400"></i><%= m.email %>
+                        </p>
+
+                        <div class="bg-zinc-50 border border-zinc-200/80 rounded-xl p-3.5 grid grid-cols-2 gap-2 text-center text-xs mb-4">
+                            <div>
+                                <span class="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Projetos</span>
+                                <p class="font-extrabold text-zinc-950 text-base mt-0.5 font-mono"><%= m.total_projects || 0 %></p>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Entregas</span>
+                                <p class="font-extrabold text-emerald-600 text-base mt-0.5 font-mono"><%= m.completed_tasks || 0 %></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2 pt-3 border-t border-zinc-200/80">
+                        <button data-member="<%= encodeURIComponent(JSON.stringify(m)) %>" onclick="openEditMemberModal(this)" class="px-3 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-semibold transition-colors flex items-center gap-1.5">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Editar
+                        </button>
+                        <button onclick="openDeleteMemberModal(<%= m.id %>, '<%= m.name %>')" class="px-3 py-1.5 rounded-xl bg-zinc-100 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition-colors flex items-center gap-1.5">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Excluir
+                        </button>
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div class="col-span-full card-saas p-12 text-center">
+                <i data-lucide="users" class="w-10 h-10 text-zinc-400 mx-auto mb-3"></i>
+                <h3 class="text-zinc-950 font-bold text-base">Nenhum membro encontrado</h3>
+                <p class="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">Cadastre integrantes para atuar nos projetos da organização.</p>
+                <button onclick="openNewMemberModal()" class="mt-4 px-4 py-2 bg-zinc-950 text-white hover:bg-zinc-800 rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15">
+                    Cadastrar Primeiro Membro
+                </button>
+            </div>
+        <% } %>
+    </div>
+</main>
+
+<!-- Modal Novo Membro -->
+<div id="newMemberModal" class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-md hidden">
+    <div class="bg-white border border-zinc-200/90 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+        <div class="flex items-center justify-between border-b border-zinc-200/80 pb-4 mb-4">
+            <h3 class="font-bold text-zinc-950 text-sm flex items-center gap-2">
+                <i data-lucide="user-plus" class="w-4 h-4 text-zinc-500"></i> Cadastrar Membro
+            </h3>
+            <button onclick="closeNewMemberModal()" class="text-zinc-400 hover:text-zinc-950">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <form action="/team/create" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Nome Completo *</label>
+                <input type="text" name="name" required placeholder="Ex: Mariana Alves" 
+                       class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">E-mail Corporativo *</label>
+                <input type="email" name="email" required placeholder="mariana.alves@empresa.com" 
+                       class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Cargo / Especialidade *</label>
+                <select name="role" required class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                    <option value="Product Owner">Product Owner</option>
+                    <option value="Scrum Master">Scrum Master</option>
+                    <option value="Desenvolvedor Senior">Desenvolvedor Senior</option>
+                    <option value="Desenvolvedor Frontend">Desenvolvedor Frontend</option>
+                    <option value="Desenvolvedor Backend">Desenvolvedor Backend</option>
+                    <option value="UX/UI Designer">UX/UI Designer</option>
+                    <option value="QA Engineer">QA Engineer</option>
+                    <option value="DevOps Engineer">DevOps Engineer</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">URL da Imagem de Avatar (Opcional)</label>
+                <input type="url" name="avatar_url" placeholder="https://..." 
+                       class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-zinc-200/80">
+                <button type="button" onclick="closeNewMemberModal()" class="px-4 py-2 text-xs font-medium text-zinc-500 hover:text-zinc-950">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15">Salvar Membro</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Editar Membro -->
+<div id="editMemberModal" class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-md hidden">
+    <div class="bg-white border border-zinc-200/90 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+        <div class="flex items-center justify-between border-b border-zinc-200/80 pb-4 mb-4">
+            <h3 class="font-bold text-zinc-950 text-sm flex items-center gap-2">
+                <i data-lucide="edit-3" class="w-4 h-4 text-zinc-500"></i> Editar Membro
+            </h3>
+            <button onclick="closeEditMemberModal()" class="text-zinc-400 hover:text-zinc-950">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <form id="editMemberForm" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Nome Completo *</label>
+                <input type="text" id="edit_member_name" name="name" required
+                       class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">E-mail Corporativo *</label>
+                <input type="email" id="edit_member_email" name="email" required
+                       class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Cargo *</label>
+                <select id="edit_member_role" name="role" required class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                    <option value="Product Owner">Product Owner</option>
+                    <option value="Scrum Master">Scrum Master</option>
+                    <option value="Desenvolvedor Senior">Desenvolvedor Senior</option>
+                    <option value="Desenvolvedor Frontend">Desenvolvedor Frontend</option>
+                    <option value="Desenvolvedor Backend">Desenvolvedor Backend</option>
+                    <option value="UX/UI Designer">UX/UI Designer</option>
+                    <option value="QA Engineer">QA Engineer</option>
+                    <option value="DevOps Engineer">DevOps Engineer</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">URL da Imagem de Avatar</label>
+                <input type="url" id="edit_member_avatar" name="avatar_url"
+                       class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-zinc-200/80">
+                <button type="button" onclick="closeEditMemberModal()" class="px-4 py-2 text-xs font-medium text-zinc-500 hover:text-zinc-950">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15">Atualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Excluir Membro -->
+<div id="deleteMemberModal" class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-md hidden">
+    <div class="bg-white border border-zinc-200/90 rounded-2xl w-full max-w-md p-6 shadow-2xl text-center">
+        <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-600 border border-rose-500/20 flex items-center justify-center mx-auto mb-3">
+            <i data-lucide="user-x" class="w-5 h-5"></i>
+        </div>
+        <h3 class="font-extrabold text-zinc-950 text-base">Excluir Membro</h3>
+        <p class="text-xs text-zinc-500 mt-1">Deseja remover o profissional <strong id="deleteMemberName" class="text-zinc-950"></strong>?</p>
+
+        <form id="deleteMemberForm" method="POST" class="flex items-center justify-center gap-3 mt-6">
+            <button type="button" onclick="closeDeleteMemberModal()" class="px-4 py-2 text-xs font-semibold text-zinc-600 hover:text-zinc-950 bg-zinc-100 border border-zinc-200 rounded-xl">Cancelar</button>
+            <button type="submit" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold shadow-sm">Sim, Excluir</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openNewMemberModal() { openModal('newMemberModal'); }
+    function closeNewMemberModal() { closeModal('newMemberModal'); }
+
+    function openEditMemberModal(btnOrMember) {
+        let member = btnOrMember;
+        if (btnOrMember instanceof HTMLElement) {
+            member = JSON.parse(decodeURIComponent(btnOrMember.getAttribute('data-member')));
+        }
+        document.getElementById('editMemberForm').action = `/team/${member.id}/update`;
+        document.getElementById('edit_member_name').value = member.name || '';
+        document.getElementById('edit_member_email').value = member.email || '';
+        document.getElementById('edit_member_role').value = member.role || 'Desenvolvedor Frontend';
+        document.getElementById('edit_member_avatar').value = member.avatar_url || '';
+        openModal('editMemberModal');
+    }
+    function closeEditMemberModal() { closeModal('editMemberModal'); }
+
+    function openDeleteMemberModal(id, name) {
+        document.getElementById('deleteMemberForm').action = `/team/${id}/delete`;
+        document.getElementById('deleteMemberName').innerText = name;
+        openModal('deleteMemberModal');
+    }
+    function closeDeleteMemberModal() { closeModal('deleteMemberModal'); }
+</script>
+
+<%- include('../partials/footer') %>

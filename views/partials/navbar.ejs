@@ -1,0 +1,32 @@
+<header class="h-20 border-b border-zinc-200/80 bg-white/80 backdrop-blur-xl fixed top-0 right-0 left-64 z-20 px-8 flex items-center justify-between shadow-xs">
+    <!-- Left Section: Breadcrumb & Search -->
+    <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2 text-xs">
+            <span class="text-zinc-400 font-medium">GerêncieJá</span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-zinc-300"></i>
+            <span class="font-extrabold text-zinc-950"><%= typeof title !== 'undefined' ? title : 'Dashboard' %></span>
+        </div>
+
+        <form action="/projects" method="GET" class="relative hidden md:block">
+            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400"></i>
+            <input type="text" name="search" placeholder="Pesquisar no GerêncieJá..." 
+                   class="bg-zinc-100/80 border border-zinc-200/80 rounded-2xl pl-9 pr-8 py-2 text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-zinc-950 w-72 transition-all">
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono font-bold text-zinc-400 bg-white px-1.5 py-0.5 rounded-md border border-zinc-200">⌘K</span>
+        </form>
+    </div>
+
+    <!-- Right Section: Badges & Controls -->
+    <div class="flex items-center gap-3">
+        <!-- DB Badge -->
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 border border-zinc-200/80 text-zinc-700 text-xs font-medium">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-[11px] font-mono font-bold text-zinc-900">SQLite Active</span>
+        </div>
+
+        <!-- Quick Action: Create Project -->
+        <button onclick="openNewProjectModal()" class="flex items-center gap-2 px-4 py-2 bg-[#A3E635] text-zinc-950 hover:bg-[#84CC16] rounded-2xl text-xs font-extrabold shadow-md shadow-[#A3E635]/20 transition-all">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Novo Projeto</span>
+        </button>
+    </div>
+</header>

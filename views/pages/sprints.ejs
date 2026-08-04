@@ -1,0 +1,283 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+<%- include('../partials/navbar') %>
+
+<main class="ml-64 pt-20 p-8 min-h-screen flex-1 relative z-10">
+    <!-- Header Banner -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-3xl font-extrabold text-zinc-950 tracking-tight flex items-center gap-3">
+                <span>Gestão de Sprints</span>
+                <span class="text-xs bg-zinc-950 text-white border border-zinc-950 px-3 py-1 rounded-full font-mono font-medium"><%= sprints.length %> Ciclos Ágeis</span>
+            </h2>
+            <p class="text-zinc-500 text-xs mt-1.5 leading-relaxed">Planeje iterações, acompanhe a capacidade da equipe e finalize entregas.</p>
+        </div>
+
+        <button onclick="openNewSprintModal()" class="px-4 py-2.5 bg-zinc-950 text-white hover:bg-zinc-800 rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15 transition-all flex items-center gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Nova Sprint</span>
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="card-saas p-4 mb-8 flex items-center justify-between gap-4">
+        <form action="/sprints" method="GET" class="flex items-center gap-3 flex-1 max-w-xl">
+            <select name="project_id" onchange="this.form.submit()" class="bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-800 focus:outline-none focus:border-zinc-950">
+                <option value="">Todos os Projetos</option>
+                <% projects.forEach(p => { %>
+                    <option value="<%= p.id %>" <%= String(projectId) === String(p.id) ? 'selected' : '' %>><%= p.name %> (<%= p.key %>)</option>
+                <% }) %>
+            </select>
+
+            <div class="relative flex-1">
+                <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400"></i>
+                <input type="text" name="search" value="<%= search %>" placeholder="Pesquisar por nome ou meta..." 
+                       class="w-full bg-white border border-zinc-200 rounded-xl pl-9 pr-3 py-2 text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <button type="submit" class="px-3.5 py-2 bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 rounded-xl text-xs font-semibold text-zinc-800">Filtrar</button>
+        </form>
+    </div>
+
+    <!-- Sprints Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% if (sprints && sprints.length > 0) { %>
+            <% sprints.forEach(s => { %>
+                <div class="card-saas p-6 flex flex-col justify-between relative">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2.5 py-1 rounded-lg bg-zinc-950 text-white font-mono text-xs font-bold shadow-xs">
+                                <%= s.project_key %>
+                            </span>
+
+                            <% if (s.status === 'Em Andamento') { %>
+                                <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 text-[11px] font-bold flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Em Andamento
+                                </span>
+                            <% } else if (s.status === 'Concluída') { %>
+                                <span class="px-2.5 py-0.5 rounded-full bg-sky-500/10 text-sky-700 border border-sky-500/20 text-[11px] font-bold flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span> Concluída
+                                </span>
+                            <% } else { %>
+                                <span class="px-2.5 py-0.5 rounded-full bg-zinc-200 text-zinc-700 border border-zinc-300 text-[11px] font-bold flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> Planejada
+                                </span>
+                            <% } %>
+                        </div>
+
+                        <h3 class="font-extrabold text-zinc-950 text-base mb-1"><%= s.name %></h3>
+                        <p class="text-xs text-zinc-500 mb-5 line-clamp-2 leading-relaxed">🎯 <strong>Meta:</strong> <%= s.goal || 'Sem meta definida.' %></p>
+
+                        <div class="bg-zinc-50 border border-zinc-200/80 rounded-xl p-3.5 space-y-2 mb-4">
+                            <div class="flex items-center justify-between text-xs text-zinc-500">
+                                <span>Período do Ciclo</span>
+                                <span class="font-mono text-zinc-950 font-bold"><%= formatDate(s.start_date) %> - <%= formatDate(s.end_date) %></span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs pt-1 border-t border-zinc-200/80">
+                                <span>Progresso de Pontos</span>
+                                <span class="font-mono font-extrabold text-zinc-950"><%= s.done_points || 0 %> / <%= s.total_points || 0 %> pts</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-3 border-t border-zinc-200/80">
+                        <% if (s.status === 'Em Andamento') { %>
+                            <button onclick="openFinishSprintModal(<%= s.id %>, '<%= s.name %>')" class="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 border border-emerald-500/30 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                                <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Finalizar Sprint
+                            </button>
+                        <% } else { %>
+                            <span class="text-[11px] text-zinc-400 font-mono font-medium">Status: <%= s.status %></span>
+                        <% } %>
+
+                        <div class="flex items-center gap-1">
+                            <button data-sprint="<%= encodeURIComponent(JSON.stringify(s)) %>" onclick="openEditSprintModal(this)" class="p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition-colors">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="openDeleteSprintModal(<%= s.id %>, '<%= s.name %>')" class="p-2 rounded-xl bg-zinc-100 hover:bg-rose-100 text-rose-600 transition-colors">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div class="col-span-full card-saas p-12 text-center">
+                <i data-lucide="zap" class="w-10 h-10 text-zinc-400 mx-auto mb-3"></i>
+                <h3 class="text-zinc-950 font-bold text-base">Nenhuma sprint encontrada</h3>
+                <p class="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">Crie novos ciclos ágeis para organizar as tarefas em andamento.</p>
+                <button onclick="openNewSprintModal()" class="mt-4 px-4 py-2 bg-zinc-950 text-white hover:bg-zinc-800 rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15">
+                    Criar Primeira Sprint
+                </button>
+            </div>
+        <% } %>
+    </div>
+</main>
+
+<!-- Modal Nova Sprint -->
+<div id="newSprintModal" class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-md hidden">
+    <div class="bg-white border border-zinc-200/90 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+        <div class="flex items-center justify-between border-b border-zinc-200/80 pb-4 mb-4">
+            <h3 class="font-bold text-zinc-950 text-sm flex items-center gap-2">
+                <i data-lucide="zap" class="w-4 h-4 text-zinc-500"></i> Criar Nova Sprint
+            </h3>
+            <button onclick="closeNewSprintModal()" class="text-zinc-400 hover:text-zinc-950">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <form action="/sprints/create" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Projeto *</label>
+                <select name="project_id" required class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                    <option value="">Selecione um projeto</option>
+                    <% projects.forEach(p => { %>
+                        <option value="<%= p.id %>"><%= p.name %> (<%= p.key %>)</option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Nome da Sprint *</label>
+                <input type="text" name="name" required placeholder="Ex: Sprint 24 - Checkout V2" 
+                       class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Objetivo / Meta da Sprint</label>
+                <textarea name="goal" rows="2" placeholder="Descreva a meta principal do ciclo..." 
+                          class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Data de Início</label>
+                    <input type="date" name="start_date" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Data de Término</label>
+                    <input type="date" name="end_date" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-zinc-200/80">
+                <button type="button" onclick="closeNewSprintModal()" class="px-4 py-2 text-xs font-medium text-zinc-500 hover:text-zinc-950">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15">Criar Sprint</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Editar Sprint -->
+<div id="editSprintModal" class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-md hidden">
+    <div class="bg-white border border-zinc-200/90 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+        <div class="flex items-center justify-between border-b border-zinc-200/80 pb-4 mb-4">
+            <h3 class="font-bold text-zinc-950 text-sm flex items-center gap-2">
+                <i data-lucide="edit-3" class="w-4 h-4 text-zinc-500"></i> Editar Sprint
+            </h3>
+            <button onclick="closeEditSprintModal()" class="text-zinc-400 hover:text-zinc-950">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <form id="editSprintForm" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Nome da Sprint *</label>
+                <input type="text" id="edit_sprint_name" name="name" required
+                       class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Objetivo / Meta</label>
+                <textarea id="edit_sprint_goal" name="goal" rows="2"
+                          class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Status</label>
+                    <select id="edit_sprint_status" name="status" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                        <option value="Planejada">Planejada</option>
+                        <option value="Em Andamento">Em Andamento</option>
+                        <option value="Concluída">Concluída</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Data Término</label>
+                    <input type="date" id="edit_sprint_end" name="end_date" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-zinc-200/80">
+                <button type="button" onclick="closeEditSprintModal()" class="px-4 py-2 text-xs font-medium text-zinc-500 hover:text-zinc-950">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15">Atualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Finalizar Sprint -->
+<div id="finishSprintModal" class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-md hidden">
+    <div class="bg-white border border-zinc-200/90 rounded-2xl w-full max-w-md p-6 shadow-2xl text-center">
+        <div class="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center justify-center mx-auto mb-3">
+            <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+        </div>
+        <h3 class="font-extrabold text-zinc-950 text-base">Finalizar Sprint</h3>
+        <p class="text-xs text-zinc-500 mt-1">Deseja concluir oficialmente a sprint <strong id="finishSprintName" class="text-zinc-950"></strong>?</p>
+
+        <form id="finishSprintForm" method="POST" class="flex items-center justify-center gap-3 mt-6">
+            <button type="button" onclick="closeFinishSprintModal()" class="px-4 py-2 text-xs font-semibold text-zinc-600 hover:text-zinc-950 bg-zinc-100 border border-zinc-200 rounded-xl">Cancelar</button>
+            <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-sm">Confirmar Conclusão</button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Excluir Sprint -->
+<div id="deleteSprintModal" class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-md hidden">
+    <div class="bg-white border border-zinc-200/90 rounded-2xl w-full max-w-md p-6 shadow-2xl text-center">
+        <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-600 border border-rose-500/20 flex items-center justify-center mx-auto mb-3">
+            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+        </div>
+        <h3 class="font-extrabold text-zinc-950 text-base">Excluir Sprint</h3>
+        <p class="text-xs text-zinc-500 mt-1">Tem certeza que deseja excluir a sprint <strong id="deleteSprintName" class="text-zinc-950"></strong>?</p>
+
+        <form id="deleteSprintForm" method="POST" class="flex items-center justify-center gap-3 mt-6">
+            <button type="button" onclick="closeDeleteSprintModal()" class="px-4 py-2 text-xs font-semibold text-zinc-600 hover:text-zinc-950 bg-zinc-100 border border-zinc-200 rounded-xl">Cancelar</button>
+            <button type="submit" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold shadow-sm">Excluir Sprint</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openNewSprintModal() { openModal('newSprintModal'); }
+    function closeNewSprintModal() { closeModal('newSprintModal'); }
+
+    function openEditSprintModal(btnOrSprint) {
+        let sprint = btnOrSprint;
+        if (btnOrSprint instanceof HTMLElement) {
+            sprint = JSON.parse(decodeURIComponent(btnOrSprint.getAttribute('data-sprint')));
+        }
+        document.getElementById('editSprintForm').action = `/sprints/${sprint.id}/update`;
+        document.getElementById('edit_sprint_name').value = sprint.name || '';
+        document.getElementById('edit_sprint_goal').value = sprint.goal || '';
+        document.getElementById('edit_sprint_status').value = sprint.status || 'Planejada';
+        document.getElementById('edit_sprint_end').value = sprint.end_date || '';
+        openModal('editSprintModal');
+    }
+    function closeEditSprintModal() { closeModal('editSprintModal'); }
+
+    function openFinishSprintModal(id, name) {
+        document.getElementById('finishSprintForm').action = `/sprints/${id}/finish`;
+        document.getElementById('finishSprintName').innerText = name;
+        openModal('finishSprintModal');
+    }
+    function closeFinishSprintModal() { closeModal('finishSprintModal'); }
+
+    function openDeleteSprintModal(id, name) {
+        document.getElementById('deleteSprintForm').action = `/sprints/${id}/delete`;
+        document.getElementById('deleteSprintName').innerText = name;
+        openModal('deleteSprintModal');
+    }
+    function closeDeleteSprintModal() { closeModal('deleteSprintModal'); }
+</script>
+
+<%- include('../partials/footer') %>

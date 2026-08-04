@@ -1,0 +1,269 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+<%- include('../partials/navbar') %>
+
+<main class="ml-64 pt-20 p-8 min-h-screen flex-1 relative z-10">
+    <!-- Header Banner -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-3xl font-extrabold text-zinc-950 tracking-tight flex items-center gap-3">
+                <span>Metas & OKRs</span>
+                <span class="text-xs bg-zinc-950 text-white border border-zinc-950 px-3 py-1 rounded-full font-mono font-medium"><%= goals.length %> Metas</span>
+            </h2>
+            <p class="text-zinc-500 text-xs mt-1.5 leading-relaxed">Acompanhe os Objetivos e Resultados Chave (OKRs) vinculados aos projetos.</p>
+        </div>
+
+        <button onclick="openNewGoalModal()" class="px-4 py-2.5 bg-zinc-950 text-white hover:bg-zinc-800 rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15 transition-all flex items-center gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Nova Meta</span>
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="card-saas p-4 mb-8 flex items-center justify-between gap-4">
+        <form action="/goals" method="GET" class="flex items-center gap-3 flex-1 max-w-xl">
+            <select name="project_id" onchange="this.form.submit()" class="bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-800 focus:outline-none focus:border-zinc-950">
+                <option value="">Todos os Projetos</option>
+                <% projects.forEach(p => { %>
+                    <option value="<%= p.id %>" <%= String(projectId) === String(p.id) ? 'selected' : '' %>><%= p.name %> (<%= p.key %>)</option>
+                <% }) %>
+            </select>
+
+            <div class="relative flex-1">
+                <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400"></i>
+                <input type="text" name="search" value="<%= search %>" placeholder="Pesquisar metas..." 
+                       class="w-full bg-white border border-zinc-200 rounded-xl pl-9 pr-3 py-2 text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <button type="submit" class="px-3.5 py-2 bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 rounded-xl text-xs font-semibold text-zinc-800">Filtrar</button>
+        </form>
+    </div>
+
+    <!-- Goals Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% if (goals && goals.length > 0) { %>
+            <% goals.forEach(g => { %>
+                <% const progressPct = (g.target_value && g.target_value > 0) ? Math.min(100, Math.round((g.current_value / g.target_value) * 100)) : 0; %>
+                <div class="card-saas p-6 flex flex-col justify-between relative">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2.5 py-1 rounded-lg bg-zinc-950 text-white font-mono text-xs font-bold shadow-xs">
+                                <%= g.project_key %>
+                            </span>
+
+                            <% if (progressPct >= 100) { %>
+                                <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 text-[11px] font-bold">Atingida</span>
+                            <% } else if (progressPct >= 50) { %>
+                                <span class="px-2.5 py-0.5 rounded-full bg-sky-500/10 text-sky-700 border border-sky-500/20 text-[11px] font-bold">Em Progresso</span>
+                            <% } else { %>
+                                <span class="px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 border border-amber-500/20 text-[11px] font-bold">Atenção</span>
+                            <% } %>
+                        </div>
+
+                        <h3 class="font-extrabold text-zinc-950 text-base mb-1"><%= g.title %></h3>
+                        <p class="text-xs text-zinc-500 mb-5 line-clamp-2 leading-relaxed"><%= g.description || 'Sem descrição cadastrada.' %></p>
+
+                        <div class="bg-zinc-50 border border-zinc-200/80 rounded-xl p-3.5 space-y-2 mb-4">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-zinc-500 font-medium">Progresso do Result Key</span>
+                                <span class="font-mono font-extrabold text-zinc-950"><%= g.current_value %> / <%= g.target_value %> <%= g.unit %> (<%= progressPct %>%)</span>
+                            </div>
+                            <div class="w-full bg-zinc-200 rounded-full h-2 overflow-hidden">
+                                <div class="bg-zinc-950 h-2 rounded-full" style="width: <%= progressPct %>%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-3 border-t border-zinc-200/80">
+                        <span class="text-[11px] text-zinc-500 font-medium">Prazo: <%= formatDate(g.due_date) %></span>
+                        <div class="flex items-center gap-1">
+                            <button data-goal="<%= encodeURIComponent(JSON.stringify(g)) %>" onclick="openEditGoalModal(this)" class="p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 transition-colors">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="openDeleteGoalModal(<%= g.id %>, '<%= g.title %>')" class="p-2 rounded-xl bg-zinc-100 hover:bg-rose-100 text-rose-600 transition-colors">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div class="col-span-full card-saas p-12 text-center">
+                <i data-lucide="target" class="w-10 h-10 text-zinc-400 mx-auto mb-3"></i>
+                <h3 class="text-zinc-950 font-bold text-base">Nenhuma meta cadastrada</h3>
+                <p class="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">Cadastre metas e OKRs estratégicos para sua organização.</p>
+                <button onclick="openNewGoalModal()" class="mt-4 px-4 py-2 bg-zinc-950 text-white hover:bg-zinc-800 rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15">
+                    Criar Primeira Meta
+                </button>
+            </div>
+        <% } %>
+    </div>
+</main>
+
+<!-- Modal Nova Meta -->
+<div id="newGoalModal" class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-md hidden">
+    <div class="bg-white border border-zinc-200/90 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+        <div class="flex items-center justify-between border-b border-zinc-200/80 pb-4 mb-4">
+            <h3 class="font-bold text-zinc-950 text-sm flex items-center gap-2">
+                <i data-lucide="target" class="w-4 h-4 text-zinc-500"></i> Criar Nova Meta
+            </h3>
+            <button onclick="closeNewGoalModal()" class="text-zinc-400 hover:text-zinc-950">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <form action="/goals/create" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Projeto *</label>
+                <select name="project_id" required class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                    <option value="">Selecione o projeto</option>
+                    <% projects.forEach(p => { %>
+                        <option value="<%= p.id %>"><%= p.name %> (<%= p.key %>)</option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Título da Meta / OKR *</label>
+                <input type="text" name="title" required placeholder="Ex: Reduzir tempo de carregamento para 1.2s" 
+                       class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Descrição</label>
+                <textarea name="description" rows="2" placeholder="Resumo do indicador..." 
+                          class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950"></textarea>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Valor Alvo *</label>
+                    <input type="number" name="target_value" value="100" required step="0.1"
+                           class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950 font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Valor Atual</label>
+                    <input type="number" name="current_value" value="0" step="0.1"
+                           class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950 font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Unidade</label>
+                    <input type="text" name="unit" placeholder="Ex: % ou ms" 
+                           class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Data Limite / Prazo</label>
+                <input type="date" name="due_date" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-zinc-200/80">
+                <button type="button" onclick="closeNewGoalModal()" class="px-4 py-2 text-xs font-medium text-zinc-500 hover:text-zinc-950">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15">Salvar Meta</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Editar Meta -->
+<div id="editGoalModal" class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-md hidden">
+    <div class="bg-white border border-zinc-200/90 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+        <div class="flex items-center justify-between border-b border-zinc-200/80 pb-4 mb-4">
+            <h3 class="font-bold text-zinc-950 text-sm flex items-center gap-2">
+                <i data-lucide="edit-3" class="w-4 h-4 text-zinc-500"></i> Editar Meta
+            </h3>
+            <button onclick="closeEditGoalModal()" class="text-zinc-400 hover:text-zinc-950">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <form id="editGoalForm" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Título da Meta *</label>
+                <input type="text" id="edit_goal_title" name="title" required
+                       class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Descrição</label>
+                <textarea id="edit_goal_description" name="description" rows="2"
+                          class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950"></textarea>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Valor Alvo</label>
+                    <input type="number" id="edit_goal_target" name="target_value" step="0.1" required
+                           class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950 font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Valor Atual</label>
+                    <input type="number" id="edit_goal_current" name="current_value" step="0.1" required
+                           class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950 font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Unidade</label>
+                    <input type="text" id="edit_goal_unit" name="unit"
+                           class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Data Limite</label>
+                <input type="date" id="edit_goal_due" name="due_date" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-zinc-200/80">
+                <button type="button" onclick="closeEditGoalModal()" class="px-4 py-2 text-xs font-medium text-zinc-500 hover:text-zinc-950">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15">Atualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Excluir Meta -->
+<div id="deleteGoalModal" class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-md hidden">
+    <div class="bg-white border border-zinc-200/90 rounded-2xl w-full max-w-md p-6 shadow-2xl text-center">
+        <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-600 border border-rose-500/20 flex items-center justify-center mx-auto mb-3">
+            <i data-lucide="trash-2" class="w-5 h-5"></i>
+        </div>
+        <h3 class="font-extrabold text-zinc-950 text-base">Excluir Meta</h3>
+        <p class="text-xs text-zinc-500 mt-1">Deseja excluir a meta <strong id="deleteGoalTitle" class="text-zinc-950"></strong>?</p>
+
+        <form id="deleteGoalForm" method="POST" class="flex items-center justify-center gap-3 mt-6">
+            <button type="button" onclick="closeDeleteGoalModal()" class="px-4 py-2 text-xs font-semibold text-zinc-600 hover:text-zinc-950 bg-zinc-100 border border-zinc-200 rounded-xl">Cancelar</button>
+            <button type="submit" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold shadow-sm">Excluir</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openNewGoalModal() { openModal('newGoalModal'); }
+    function closeNewGoalModal() { closeModal('newGoalModal'); }
+
+    function openEditGoalModal(btnOrGoal) {
+        let goal = btnOrGoal;
+        if (btnOrGoal instanceof HTMLElement) {
+            goal = JSON.parse(decodeURIComponent(btnOrGoal.getAttribute('data-goal')));
+        }
+        document.getElementById('editGoalForm').action = `/goals/${goal.id}/update`;
+        document.getElementById('edit_goal_title').value = goal.title || '';
+        document.getElementById('edit_goal_description').value = goal.description || '';
+        document.getElementById('edit_goal_target').value = goal.target_value || 100;
+        document.getElementById('edit_goal_current').value = goal.current_value || 0;
+        document.getElementById('edit_goal_unit').value = goal.unit || '%';
+        document.getElementById('edit_goal_due').value = goal.due_date || '';
+        openModal('editGoalModal');
+    }
+    function closeEditGoalModal() { closeModal('editGoalModal'); }
+
+    function openDeleteGoalModal(id, title) {
+        document.getElementById('deleteGoalForm').action = `/goals/${id}/delete`;
+        document.getElementById('deleteGoalTitle').innerText = title;
+        openModal('deleteGoalModal');
+    }
+    function closeDeleteGoalModal() { closeModal('deleteGoalModal'); }
+</script>
+
+<%- include('../partials/footer') %>

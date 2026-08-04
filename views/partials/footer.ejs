@@ -1,0 +1,99 @@
+        </main>
+    </div>
+
+    <!-- Quick Modal for New Project (Global) -->
+    <div id="globalProjectModal" class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-md hidden">
+        <div class="bg-white border border-zinc-200/90 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
+            <div class="flex items-center justify-between border-b border-zinc-200/80 pb-4 mb-4">
+                <h3 class="font-bold text-zinc-950 text-sm flex items-center gap-2">
+                    <i data-lucide="folder-plus" class="w-4 h-4 text-zinc-500"></i>
+                    Criar Novo Projeto
+                </h3>
+                <button onclick="closeNewProjectModal()" class="text-zinc-400 hover:text-zinc-950">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <form action="/projects/create" method="POST" id="globalProjectForm" class="space-y-4">
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-semibold text-zinc-600 mb-1">Nome do Projeto *</label>
+                        <input type="text" name="name" required placeholder="Ex: Plataforma E-commerce V2" 
+                               class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-600 mb-1">Chave (KEY) *</label>
+                        <input type="text" name="key" required placeholder="Ex: PEC" maxlength="6" style="text-transform: uppercase;"
+                               class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 uppercase font-mono focus:outline-none focus:border-zinc-950">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Descrição</label>
+                    <textarea name="description" rows="2" placeholder="Resumo do objetivo do projeto..."
+                              class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-600 mb-1">Categoria</label>
+                        <select name="category" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                            <option value="Desenvolvimento">Desenvolvimento</option>
+                            <option value="Mobile">Mobile</option>
+                            <option value="Design">Design</option>
+                            <option value="Infraestrutura">Infraestrutura</option>
+                            <option value="Marketing">Marketing</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-600 mb-1">Status Inicial</label>
+                        <select name="status" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                            <option value="Planejamento">Planejamento</option>
+                            <option value="Em Andamento" selected>Em Andamento</option>
+                            <option value="Pausado">Pausado</option>
+                            <option value="Concluído">Concluído</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-600 mb-1">Data de Início</label>
+                        <input type="date" name="start_date" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-600 mb-1">Data de Término</label>
+                        <input type="date" name="end_date" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-zinc-200/80">
+                    <button type="button" onclick="closeNewProjectModal()" class="px-4 py-2 text-xs font-medium text-zinc-500 hover:text-zinc-950">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15">
+                        Salvar Projeto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+
+        function openNewProjectModal() {
+            openModal('globalProjectModal');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+        function closeNewProjectModal() {
+            closeModal('globalProjectModal');
+        }
+    </script>
+</body>
+</html>

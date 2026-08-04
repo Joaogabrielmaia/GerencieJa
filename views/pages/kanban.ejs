@@ -1,0 +1,404 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+<%- include('../partials/navbar') %>
+
+<main class="ml-64 pt-20 p-8 min-h-screen flex-1 relative z-10 flex flex-col">
+    <!-- Header Banner -->
+    <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-3xl font-extrabold text-zinc-950 tracking-tight flex items-center gap-3">
+                <span>Quadro Kanban Interativo</span>
+                <span class="text-xs bg-zinc-950 text-white border border-zinc-950 px-3 py-1 rounded-full font-mono font-medium shadow-xs">Auto-Save SQLite</span>
+            </h2>
+            <p class="text-zinc-500 text-xs mt-1.5 leading-relaxed">Arraste e solte tarefas entre as colunas para atualizar seu status em tempo real.</p>
+        </div>
+
+        <button onclick="openNewTaskModal()" class="px-4 py-2.5 bg-zinc-950 text-white hover:bg-zinc-800 rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15 transition-all flex items-center gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Nova Tarefa</span>
+        </button>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="card-saas p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
+        <form action="/kanban" method="GET" class="flex flex-wrap items-center gap-3 flex-1">
+            <select name="project_id" onchange="this.form.submit()" class="bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-800 focus:outline-none focus:border-zinc-950">
+                <option value="">Todos os Projetos</option>
+                <% projects.forEach(p => { %>
+                    <option value="<%= p.id %>" <%= String(projectId) === String(p.id) ? 'selected' : '' %>><%= p.name %> (<%= p.key %>)</option>
+                <% }) %>
+            </select>
+
+            <select name="sprint_id" onchange="this.form.submit()" class="bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-800 focus:outline-none focus:border-zinc-950">
+                <option value="">Todas as Sprints</option>
+                <% sprints.forEach(s => { %>
+                    <option value="<%= s.id %>" <%= String(sprintId) === String(s.id) ? 'selected' : '' %>><%= s.name %></option>
+                <% }) %>
+            </select>
+
+            <div class="relative flex-1 min-w-[200px]">
+                <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400"></i>
+                <input type="text" name="search" value="<%= search %>" placeholder="Pesquisar tarefas..." 
+                       class="w-full bg-white border border-zinc-200 rounded-xl pl-9 pr-3 py-2 text-xs text-zinc-950 placeholder-zinc-400 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <button type="submit" class="px-3.5 py-2 bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 rounded-xl text-xs font-semibold text-zinc-800">Filtrar</button>
+        </form>
+    </div>
+
+    <!-- Kanban 5 Columns Board (Light / Editorial High Contrast Design) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 flex-1 items-start">
+        <% const columnConfig = [
+            { key: 'Backlog', label: 'Backlog', sub: 'Pendentes', badge: 'bg-zinc-200 text-zinc-800 border-zinc-300' },
+            { key: 'To Do', label: 'A Fazer', sub: 'To Do', badge: 'bg-sky-500/10 text-sky-700 border-sky-500/20' },
+            { key: 'In Progress', label: 'Em Progresso', sub: 'In Progress', badge: 'bg-amber-500/10 text-amber-700 border-amber-500/20' },
+            { key: 'Review', label: 'Em Revisão', sub: 'Review', badge: 'bg-purple-500/10 text-purple-700 border-purple-500/20' },
+            { key: 'Done', label: 'Concluído', sub: 'Done', badge: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20' }
+        ]; %>
+
+        <% columnConfig.forEach(col => { %>
+            <div class="bg-zinc-100/70 border border-zinc-200/90 rounded-2xl p-4 flex flex-col max-h-full min-h-[600px] shadow-xs" 
+                 ondragover="handleDragOver(event)" 
+                 ondrop="handleDrop(event, '<%= col.key %>')">
+                
+                <!-- Column Header -->
+                <div class="flex items-center justify-between pb-3.5 border-b border-zinc-200/80 mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="font-extrabold text-zinc-950 text-xs tracking-tight"><%= col.label %></span>
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border <%= col.badge %>">
+                            <%= columns[col.key] ? columns[col.key].length : 0 %>
+                        </span>
+                    </div>
+                    <button onclick="openNewTaskModalWithStatus('<%= col.key %>')" title="Adicionar nesta coluna" class="text-zinc-400 hover:text-zinc-950 p-1">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Column Cards List (Floating White Cards) -->
+                <div class="flex-1 space-y-3.5 overflow-y-auto pr-1">
+                    <% if (columns[col.key] && columns[col.key].length > 0) { %>
+                        <% columns[col.key].forEach(t => { %>
+                            <div class="card-saas p-4 cursor-grab active:cursor-grabbing hover:border-zinc-400 transition-all space-y-3 shadow-md shadow-zinc-200/50"
+                                 draggable="true" 
+                                 ondragstart="handleDragStart(event, <%= t.id %>)">
+                                
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="px-2.5 py-0.5 rounded-lg bg-zinc-950 text-white font-mono text-[10px] font-bold shadow-xs">
+                                        <%= t.project_key %>
+                                    </span>
+
+                                    <% if (t.priority === 'Urgente') { %>
+                                        <span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-700 border border-rose-500/20 text-[10px] font-bold">Urgente</span>
+                                    <% } else if (t.priority === 'Alta') { %>
+                                        <span class="px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 border border-amber-500/20 text-[10px] font-bold">Alta</span>
+                                    <% } else if (t.priority === 'Média') { %>
+                                        <span class="px-2.5 py-0.5 rounded-full bg-sky-500/10 text-sky-700 border border-sky-500/20 text-[10px] font-bold">Média</span>
+                                    <% } else { %>
+                                        <span class="px-2.5 py-0.5 rounded-full bg-zinc-200 text-zinc-700 border border-zinc-300 text-[10px] font-bold">Baixa</span>
+                                    <% } %>
+                                </div>
+
+                                <h4 class="font-extrabold text-zinc-950 text-xs leading-snug"><%= t.title %></h4>
+
+                                <% if (t.description) { %>
+                                    <p class="text-[11px] text-zinc-500 line-clamp-2 leading-relaxed"><%= t.description %></p>
+                                <% } %>
+
+                                <div class="flex items-center justify-between pt-2.5 border-t border-zinc-200/80 text-[11px]">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="px-2 py-0.5 bg-zinc-100 text-zinc-950 rounded-md font-mono font-bold border border-zinc-300 text-[10px]">
+                                            <%= t.story_points %> pts
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-center gap-2">
+                                        <% if (t.assignee_avatar) { %>
+                                            <img src="<%= t.assignee_avatar %>" title="<%= t.assignee_name %>" class="w-5 h-5 rounded-full object-cover border border-zinc-300">
+                                        <% } else { %>
+                                            <div class="w-5 h-5 rounded-full bg-zinc-950 text-white text-[9px] font-bold flex items-center justify-center" title="<%= t.assignee_name || 'Não atribuído' %>">
+                                                <%= t.assignee_name ? t.assignee_name.charAt(0) : '?' %>
+                                            </div>
+                                        <% } %>
+
+                                        <button data-task="<%= encodeURIComponent(JSON.stringify(t)) %>" onclick="openEditTaskModal(this)" class="text-zinc-400 hover:text-zinc-950">
+                                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                        <button onclick="openDeleteTaskModal(<%= t.id %>, '<%= t.title %>')" class="text-zinc-400 hover:text-rose-600">
+                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <div class="h-32 border-2 border-dashed border-zinc-200 rounded-xl flex items-center justify-center text-zinc-400 text-xs font-semibold">
+                            Vazio
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</main>
+
+<!-- Modal Nova Tarefa -->
+<div id="newTaskModal" class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-md hidden">
+    <div class="bg-white border border-zinc-200/90 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
+        <div class="flex items-center justify-between border-b border-zinc-200/80 pb-4 mb-4">
+            <h3 class="font-bold text-zinc-950 text-sm flex items-center gap-2">
+                <i data-lucide="kanban" class="w-4 h-4 text-zinc-500"></i> Nova Tarefa
+            </h3>
+            <button onclick="closeNewTaskModal()" class="text-zinc-400 hover:text-zinc-950">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <form action="/kanban/create" method="POST" class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Projeto *</label>
+                    <select name="project_id" required class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                        <option value="">Selecione o projeto</option>
+                        <% projects.forEach(p => { %>
+                            <option value="<%= p.id %>"><%= p.name %> (<%= p.key %>)</option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Sprint</label>
+                    <select name="sprint_id" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                        <option value="">Backlog Geral (Sem Sprint)</option>
+                        <% sprints.forEach(s => { %>
+                            <option value="<%= s.id %>"><%= s.name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Título da Tarefa *</label>
+                <input type="text" name="title" required placeholder="Ex: Criar rotas da API REST de Pagamentos" 
+                       class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Descrição detalhada</label>
+                <textarea name="description" rows="3" placeholder="Critérios de aceite e escopo..." 
+                          class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950"></textarea>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Coluna / Status</label>
+                    <select id="new_task_status" name="status" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                        <option value="Backlog">Backlog</option>
+                        <option value="To Do">A Fazer (To Do)</option>
+                        <option value="In Progress">Em Progresso</option>
+                        <option value="Review">Em Revisão</option>
+                        <option value="Done">Concluído</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Prioridade</label>
+                    <select name="priority" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                        <option value="Baixa">Baixa</option>
+                        <option value="Média" selected>Média</option>
+                        <option value="Alta">Alta</option>
+                        <option value="Urgente">Urgente</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Story Points</label>
+                    <input type="number" name="story_points" value="3" min="1" max="21" required
+                           class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950 font-mono">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Responsável</label>
+                <select name="assignee_id" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                    <option value="">Selecione um profissional</option>
+                    <% teamMembers.forEach(m => { %>
+                        <option value="<%= m.id %>"><%= m.name %> (<%= m.role %>)</option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-zinc-200/80">
+                <button type="button" onclick="closeNewTaskModal()" class="px-4 py-2 text-xs font-medium text-zinc-500 hover:text-zinc-950">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15">Salvar Tarefa</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Editar Tarefa -->
+<div id="editTaskModal" class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-md hidden">
+    <div class="bg-white border border-zinc-200/90 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
+        <div class="flex items-center justify-between border-b border-zinc-200/80 pb-4 mb-4">
+            <h3 class="font-bold text-zinc-950 text-sm flex items-center gap-2">
+                <i data-lucide="edit-3" class="w-4 h-4 text-zinc-500"></i> Editar Tarefa
+            </h3>
+            <button onclick="closeEditTaskModal()" class="text-zinc-400 hover:text-zinc-950">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <form id="editTaskForm" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Título da Tarefa *</label>
+                <input type="text" id="edit_task_title" name="title" required
+                       class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-zinc-600 mb-1">Descrição</label>
+                <textarea id="edit_task_description" name="description" rows="3"
+                          class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950"></textarea>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Status</label>
+                    <select id="edit_task_status" name="status" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                        <option value="Backlog">Backlog</option>
+                        <option value="To Do">A Fazer</option>
+                        <option value="In Progress">Em Progresso</option>
+                        <option value="Review">Em Revisão</option>
+                        <option value="Done">Concluído</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Prioridade</label>
+                    <select id="edit_task_priority" name="priority" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                        <option value="Baixa">Baixa</option>
+                        <option value="Média">Média</option>
+                        <option value="Alta">Alta</option>
+                        <option value="Urgente">Urgente</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Story Points</label>
+                    <input type="number" id="edit_task_points" name="story_points" min="1" max="21" required
+                           class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950 font-mono">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Responsável</label>
+                    <select id="edit_task_assignee" name="assignee_id" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                        <option value="">Selecione um profissional</option>
+                        <% teamMembers.forEach(m => { %>
+                            <option value="<%= m.id %>"><%= m.name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-600 mb-1">Sprint</label>
+                    <select id="edit_task_sprint" name="sprint_id" class="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-950 focus:outline-none focus:border-zinc-950">
+                        <option value="">Backlog Geral</option>
+                        <% sprints.forEach(s => { %>
+                            <option value="<%= s.id %>"><%= s.name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-zinc-200/80">
+                <button type="button" onclick="closeEditTaskModal()" class="px-4 py-2 text-xs font-medium text-zinc-500 hover:text-zinc-950">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15">Atualizar Tarefa</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Excluir Tarefa -->
+<div id="deleteTaskModal" class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 backdrop-blur-md hidden">
+    <div class="bg-white border border-zinc-200/90 rounded-2xl w-full max-w-md p-6 shadow-2xl text-center">
+        <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-600 border border-rose-500/20 flex items-center justify-center mx-auto mb-3">
+            <i data-lucide="trash-2" class="w-5 h-5"></i>
+        </div>
+        <h3 class="font-extrabold text-zinc-950 text-base">Excluir Tarefa</h3>
+        <p class="text-xs text-zinc-500 mt-1">Deseja excluir a tarefa <strong id="deleteTaskTitle" class="text-zinc-950"></strong>?</p>
+
+        <form id="deleteTaskForm" method="POST" class="flex items-center justify-center gap-3 mt-6">
+            <button type="button" onclick="closeDeleteTaskModal()" class="px-4 py-2 text-xs font-semibold text-zinc-600 hover:text-zinc-950 bg-zinc-100 border border-zinc-200 rounded-xl">Cancelar</button>
+            <button type="submit" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold shadow-sm">Excluir</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let draggedTaskId = null;
+
+    function handleDragStart(e, taskId) {
+        draggedTaskId = taskId;
+        e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleDrop(e, newStatus) {
+        e.preventDefault();
+        if (!draggedTaskId) return;
+
+        fetch('/kanban/move', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ taskId: draggedTaskId, newStatus: newStatus })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`Tarefa movida para ${newStatus}`, 'success');
+                window.location.reload();
+            } else {
+                showToast(data.message || 'Erro ao mover tarefa.', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Erro AJAX Kanban:', err);
+            showToast('Erro de conexão ao mover tarefa.', 'error');
+        });
+    }
+
+    function openNewTaskModal() { openModal('newTaskModal'); }
+    function openNewTaskModalWithStatus(status) {
+        document.getElementById('new_task_status').value = status;
+        openModal('newTaskModal');
+    }
+    function closeNewTaskModal() { closeModal('newTaskModal'); }
+
+    function openEditTaskModal(btnOrTask) {
+        let task = btnOrTask;
+        if (btnOrTask instanceof HTMLElement) {
+            task = JSON.parse(decodeURIComponent(btnOrTask.getAttribute('data-task')));
+        }
+        document.getElementById('editTaskForm').action = `/kanban/${task.id}/update`;
+        document.getElementById('edit_task_title').value = task.title || '';
+        document.getElementById('edit_task_description').value = task.description || '';
+        document.getElementById('edit_task_status').value = task.status || 'To Do';
+        document.getElementById('edit_task_priority').value = task.priority || 'Média';
+        document.getElementById('edit_task_points').value = task.story_points || 3;
+        document.getElementById('edit_task_assignee').value = task.assignee_id || '';
+        document.getElementById('edit_task_sprint').value = task.sprint_id || '';
+        openModal('editTaskModal');
+    }
+    function closeEditTaskModal() { closeModal('editTaskModal'); }
+
+    function openDeleteTaskModal(id, title) {
+        document.getElementById('deleteTaskForm').action = `/kanban/${id}/delete`;
+        document.getElementById('deleteTaskTitle').innerText = title;
+        openModal('deleteTaskModal');
+    }
+    function closeDeleteTaskModal() { closeModal('deleteTaskModal'); }
+</script>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,138 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+<%- include('../partials/navbar') %>
+
+<main class="ml-64 pt-20 p-8 min-h-screen flex-1 relative z-10">
+    <!-- Header Banner -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-3xl font-extrabold text-zinc-950 tracking-tight flex items-center gap-3">
+                <span>Relatórios & Exportação</span>
+                <span class="text-xs bg-zinc-950 text-white border border-zinc-950 px-3 py-1 rounded-full font-mono font-medium">CSV / PDF</span>
+            </h2>
+            <p class="text-zinc-500 text-xs mt-1.5 leading-relaxed">Filtre dados estratégicos de tarefas e exporte relatórios consolidados.</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="/reports/export/csv?<%= new URLSearchParams({ project_id: projectId, status: status, priority: priority }).toString() %>" 
+               class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center gap-2">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Exportar CSV (Excel)
+            </a>
+            <a href="/reports/export/pdf?<%= new URLSearchParams({ project_id: projectId, status: status, priority: priority }).toString() %>" target="_blank"
+               class="px-4 py-2.5 bg-zinc-950 text-white hover:bg-zinc-800 rounded-xl text-xs font-semibold shadow-md shadow-zinc-950/15 transition-all flex items-center gap-2">
+                <i data-lucide="printer" class="w-4 h-4"></i> Imprimir PDF Oficial
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="card-saas p-4 mb-8">
+        <form action="/reports" method="GET" class="flex flex-wrap items-center gap-4">
+            <div>
+                <label class="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Projeto</label>
+                <select name="project_id" onchange="this.form.submit()" class="bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-800 focus:outline-none focus:border-zinc-950">
+                    <option value="">Todos os Projetos</option>
+                    <% projects.forEach(p => { %>
+                        <option value="<%= p.id %>" <%= String(projectId) === String(p.id) ? 'selected' : '' %>><%= p.name %> (<%= p.key %>)</option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Status</label>
+                <select name="status" onchange="this.form.submit()" class="bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-800 focus:outline-none focus:border-zinc-950">
+                    <option value="">Todos os Status</option>
+                    <option value="Backlog" <%= status === 'Backlog' ? 'selected' : '' %>>Backlog</option>
+                    <option value="To Do" <%= status === 'To Do' ? 'selected' : '' %>>A Fazer</option>
+                    <option value="In Progress" <%= status === 'In Progress' ? 'selected' : '' %>>Em Progresso</option>
+                    <option value="Review" <%= status === 'Review' ? 'selected' : '' %>>Em Revisão</option>
+                    <option value="Done" <%= status === 'Done' ? 'selected' : '' %>>Concluído</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Prioridade</label>
+                <select name="priority" onchange="this.form.submit()" class="bg-white border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-800 focus:outline-none focus:border-zinc-950">
+                    <option value="">Todas as Prioridades</option>
+                    <option value="Baixa" <%= priority === 'Baixa' ? 'selected' : '' %>>Baixa</option>
+                    <option value="Média" <%= priority === 'Média' ? 'selected' : '' %>>Média</option>
+                    <option value="Alta" <%= priority === 'Alta' ? 'selected' : '' %>>Alta</option>
+                    <option value="Urgente" <%= priority === 'Urgente' ? 'selected' : '' %>>Urgente</option>
+                </select>
+            </div>
+
+            <div class="pt-4 flex items-center gap-2">
+                <button type="submit" class="px-3.5 py-2 bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 rounded-xl text-xs font-semibold text-zinc-800">Filtrar</button>
+                <% if (projectId || status || priority) { %>
+                    <a href="/reports" class="text-xs text-zinc-500 hover:text-rose-600 flex items-center gap-1 font-medium">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i> Limpar
+                    </a>
+                <% } %>
+            </div>
+        </form>
+    </div>
+
+    <!-- Reports Table Card -->
+    <div class="card-saas p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="font-bold text-zinc-950 text-base flex items-center gap-2">
+                <i data-lucide="file-text" class="w-4 h-4 text-zinc-500"></i>
+                Listagem Consolidada de Tarefas (<%= tasks.length %> registros)
+            </h3>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-zinc-700">
+                <thead class="bg-zinc-100 text-zinc-500 uppercase font-bold text-[10px] tracking-wider border-b border-zinc-200/80">
+                    <tr>
+                        <th class="py-3 px-4">ID</th>
+                        <th class="py-3 px-4">Projeto</th>
+                        <th class="py-3 px-4">Título da Tarefa</th>
+                        <th class="py-3 px-4">Status</th>
+                        <th class="py-3 px-4">Prioridade</th>
+                        <th class="py-3 px-4">Points</th>
+                        <th class="py-3 px-4">Responsável</th>
+                        <th class="py-3 px-4">Data Criação</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-200/60">
+                    <% if (tasks && tasks.length > 0) { %>
+                        <% tasks.forEach(t => { %>
+                            <tr class="hover:bg-zinc-50">
+                                <td class="py-3.5 px-4 font-mono font-bold text-zinc-950">#<%= t.id %></td>
+                                <td class="py-3.5 px-4 font-bold text-zinc-950">
+                                    <span class="px-2 py-0.5 rounded bg-zinc-950 text-white font-mono text-[10px] font-bold mr-1.5 shadow-xs"><%= t.project_key %></span>
+                                    <%= t.project_name %>
+                                </td>
+                                <td class="py-3.5 px-4 font-bold text-zinc-950"><%= t.title %></td>
+                                <td class="py-3.5 px-4">
+                                    <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-zinc-100 border border-zinc-200 text-zinc-800"><%= t.status %></span>
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    <% if (t.priority === 'Urgente') { %>
+                                        <span class="text-rose-600 font-bold">Urgente</span>
+                                    <% } else if (t.priority === 'Alta') { %>
+                                        <span class="text-amber-600 font-bold">Alta</span>
+                                    <% } else { %>
+                                        <span class="text-zinc-500"><%= t.priority %></span>
+                                    <% } %>
+                                </td>
+                                <td class="py-3.5 px-4 font-mono font-bold text-zinc-950"><%= t.story_points %> pts</td>
+                                <td class="py-3.5 px-4 text-zinc-700 font-medium"><%= t.assignee_name || 'Não atribuído' %></td>
+                                <td class="py-3.5 px-4 text-zinc-400 font-mono"><%= formatDate(t.created_at) %></td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="8" class="py-12 text-center text-zinc-500 text-xs">
+                                Nenhum registro encontrado para os filtros selecionados.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>
