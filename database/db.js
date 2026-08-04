@@ -1,9 +1,16 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
-const dbPath = path.join(__dirname, 'database.sqlite');
+
+const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'database.sqlite');
 const schemaPath = path.join(__dirname, 'schema.sql');
 const seedPath = path.join(__dirname, 'seed.sql');
+
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+}
+
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('Erro ao conectar ao banco de dados SQLite:', err.message);
@@ -12,9 +19,11 @@ const db = new sqlite3.Database(dbPath, (err) => {
         initDatabase();
     }
 });
+
 function initDatabase() {
     db.serialize(() => {
         db.run('PRAGMA foreign_keys = ON;');
+
         if (fs.existsSync(schemaPath)) {
             const schemaSql = fs.readFileSync(schemaPath, 'utf8');
             db.exec(schemaSql, (err) => {
@@ -28,6 +37,7 @@ function initDatabase() {
         }
     });
 }
+
 function checkAndSeed() {
     db.get('SELECT COUNT(*) as count FROM projects', [], (err, row) => {
         if (err || !row || row.count === 0) {
@@ -45,6 +55,7 @@ function checkAndSeed() {
         }
     });
 }
+
 const dbHelper = {
     all: (sql, params = []) => {
         return new Promise((resolve, reject) => {
@@ -54,6 +65,7 @@ const dbHelper = {
             });
         });
     },
+
     get: (sql, params = []) => {
         return new Promise((resolve, reject) => {
             db.get(sql, params, (err, row) => {
@@ -62,6 +74,7 @@ const dbHelper = {
             });
         });
     },
+
     run: (sql, params = []) => {
         return new Promise((resolve, reject) => {
             db.run(sql, params, function (err) {
@@ -70,6 +83,7 @@ const dbHelper = {
             });
         });
     },
+
     exec: (sql) => {
         return new Promise((resolve, reject) => {
             db.exec(sql, (err) => {
@@ -79,4 +93,5 @@ const dbHelper = {
         });
     }
 };
+
 module.exports = dbHelper;

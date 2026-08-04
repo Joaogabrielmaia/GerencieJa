@@ -1,4 +1,5 @@
 const db = require('../database/db');
+
 class Dashboard {
     static async getMetrics() {
         const totalProjects = await db.get(`SELECT COUNT(*) as count FROM projects`);
@@ -7,23 +8,28 @@ class Dashboard {
         const completedTasks = await db.get(`SELECT COUNT(*) as count FROM tasks WHERE status = 'Done'`);
         const totalMembers = await db.get(`SELECT COUNT(*) as count FROM team_members`);
         const activeSprints = await db.get(`SELECT COUNT(*) as count FROM sprints WHERE status = 'Ativa'`);
+
         const recentProjects = await db.all(`
             SELECT p.*, tm.name as owner_name 
             FROM projects p
             LEFT JOIN team_members tm ON p.owner_id = tm.id
             ORDER BY p.updated_at DESC LIMIT 5
         `);
+
         const recentActivities = await db.all(`
             SELECT ph.*, p.name as project_name
             FROM project_history ph
             JOIN projects p ON ph.project_id = p.id
             ORDER BY ph.created_at DESC LIMIT 6
         `);
+
+        // Gráfico 1: Tarefas por Status (SQLite Aggregation)
         const tasksByStatusRows = await db.all(`
             SELECT status, COUNT(*) as count 
             FROM tasks 
             GROUP BY status
         `);
+
         const statusMap = { 'Backlog': 0, 'A Fazer': 0, 'Em Progresso': 0, 'Em Revisão': 0, 'Concluído': 0 };
         tasksByStatusRows.forEach(r => {
             let key = r.status;
@@ -33,13 +39,18 @@ class Dashboard {
             if (key === 'Done') key = 'Concluído';
             statusMap[key] = (statusMap[key] || 0) + r.count;
         });
+
+        // Gráfico 2: Tarefas por Prioridade (SQLite Aggregation)
         const tasksByPriorityRows = await db.all(`
             SELECT priority, COUNT(*) as count 
             FROM tasks 
             GROUP BY priority
         `);
+
         const priorityMap = { 'Baixa': 0, 'Média': 0, 'Alta': 0, 'Urgente': 0 };
         tasksByPriorityRows.forEach(r => { priorityMap[r.priority] = r.count; });
+
+        // Gráfico 3: Progresso por Projeto (SQLite Aggregation)
         const projectProgressRows = await db.all(`
             SELECT p.key, p.name, 
                    COUNT(t.id) as total_tasks,
@@ -48,6 +59,7 @@ class Dashboard {
             LEFT JOIN tasks t ON p.id = t.project_id
             GROUP BY p.id
         `);
+
         return {
             totalProjects: totalProjects ? totalProjects.count : 0,
             activeProjects: activeProjects ? activeProjects.count : 0,
@@ -65,4 +77,5 @@ class Dashboard {
         };
     }
 }
+
 module.exports = Dashboard;

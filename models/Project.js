@@ -1,5 +1,7 @@
 const db = require('../database/db');
+
 class Project {
+    // Buscar todos os projetos com contagens e filtro de busca
     static async getAll(search = '', category = '', status = '') {
         let sql = `
             SELECT p.*, 
@@ -13,22 +15,29 @@ class Project {
             WHERE 1=1
         `;
         const params = [];
+
         if (search) {
             sql += ` AND (p.name LIKE ? OR p.key LIKE ? OR p.description LIKE ?)`;
             const term = `%${search}%`;
             params.push(term, term, term);
         }
+
         if (category) {
             sql += ` AND p.category = ?`;
             params.push(category);
         }
+
         if (status) {
             sql += ` AND p.status = ?`;
             params.push(status);
         }
+
         sql += ` ORDER BY p.updated_at DESC`;
+
         return await db.all(sql, params);
     }
+
+    // Buscar projeto por ID com dados completíssimos
     static async getById(id) {
         const sql = `
             SELECT p.*, 
@@ -42,6 +51,8 @@ class Project {
         `;
         return await db.get(sql, [id]);
     }
+
+    // Criar novo projeto (SQL puro)
     static async create(data) {
         const sql = `
             INSERT INTO projects (name, key, description, status, category, owner_id, start_date, end_date)
@@ -57,11 +68,16 @@ class Project {
             data.start_date || null,
             data.end_date || null
         ];
+
         const result = await db.run(sql, params);
+
+        // Registrar no histórico
         await db.run(
             `INSERT INTO project_history (project_id, user_name, action, details) VALUES (?, ?, ?, ?)`,
             [result.lastID, 'Sistema', 'Projeto Criado', `Projeto "${data.name}" (${data.key}) foi registrado no sistema.`]
         );
+
+        // Vincular o dono como membro do projeto se informado
         const validOwnerId = (data.owner_id && !isNaN(data.owner_id)) ? parseInt(data.owner_id) : null;
         if (validOwnerId) {
             await db.run(
@@ -69,8 +85,11 @@ class Project {
                 [result.lastID, validOwnerId, 'Líder do Projeto']
             );
         }
+
         return result.lastID;
     }
+
+    // Atualizar projeto existente (SQL puro)
     static async update(id, data) {
         const sql = `
             UPDATE projects
@@ -88,19 +107,27 @@ class Project {
             data.end_date || null,
             id
         ];
+
         const result = await db.run(sql, params);
+
+        // Registrar no histórico
         await db.run(
             `INSERT INTO project_history (project_id, user_name, action, details) VALUES (?, ?, ?, ?)`,
             [id, 'Sistema', 'Projeto Atualizado', `Informações do projeto "${data.name}" foram atualizadas.`]
         );
+
         return result.changes > 0;
     }
+
+    // Excluir projeto (SQL puro)
     static async delete(id) {
         const project = await this.getById(id);
         const sql = `DELETE FROM projects WHERE id = ?`;
         const result = await db.run(sql, [id]);
         return result.changes > 0;
     }
+
+    // Buscar membros vinculados ao projeto
     static async getMembers(projectId) {
         const sql = `
             SELECT tm.*, pm.assigned_role
@@ -111,6 +138,8 @@ class Project {
         `;
         return await db.all(sql, [projectId]);
     }
+
+    // Buscar sprint ativa do projeto
     static async getCurrentSprint(projectId) {
         const sql = `
             SELECT * FROM sprints 
@@ -119,6 +148,8 @@ class Project {
         `;
         return await db.get(sql, [projectId]);
     }
+
+    // Buscar todas as sprints do projeto
     static async getSprints(projectId) {
         const sql = `
             SELECT s.*,
@@ -132,6 +163,8 @@ class Project {
         `;
         return await db.all(sql, [projectId]);
     }
+
+    // Buscar tarefas / backlog do projeto
     static async getBacklog(projectId) {
         const sql = `
             SELECT t.*, 
@@ -152,6 +185,8 @@ class Project {
         `;
         return await db.all(sql, [projectId]);
     }
+
+    // Buscar métricas / KPIs do projeto
     static async getKPIs(projectId) {
         const totalTasksRow = await db.get(`SELECT COUNT(*) as count FROM tasks WHERE project_id = ?`, [projectId]);
         const doneTasksRow = await db.get(`SELECT COUNT(*) as count FROM tasks WHERE project_id = ? AND status = 'Done'`, [projectId]);
@@ -159,12 +194,14 @@ class Project {
         const donePointsRow = await db.get(`SELECT COALESCE(SUM(story_points), 0) as points FROM tasks WHERE project_id = ? AND status = 'Done'`, [projectId]);
         const totalSprintsRow = await db.get(`SELECT COUNT(*) as count FROM sprints WHERE project_id = ?`, [projectId]);
         const membersRow = await db.get(`SELECT COUNT(*) as count FROM project_members WHERE project_id = ?`, [projectId]);
+
         const totalTasks = totalTasksRow ? totalTasksRow.count : 0;
         const doneTasks = doneTasksRow ? doneTasksRow.count : 0;
         const totalPoints = totalPointsRow ? totalPointsRow.points : 0;
         const donePoints = donePointsRow ? donePointsRow.points : 0;
         const completionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
         const pointsRate = totalPoints > 0 ? Math.round((donePoints / totalPoints) * 100) : 0;
+
         return {
             totalTasks,
             doneTasks,
@@ -176,13 +213,18 @@ class Project {
             totalMembers: membersRow ? membersRow.count : 0
         };
     }
+
+    // Buscar metas do projeto
     static async getGoals(projectId) {
         const sql = `SELECT * FROM goals WHERE project_id = ? ORDER BY due_date ASC`;
         return await db.all(sql, [projectId]);
     }
+
+    // Buscar histórico do projeto
     static async getHistory(projectId) {
         const sql = `SELECT * FROM project_history WHERE project_id = ? ORDER BY created_at DESC LIMIT 50`;
         return await db.all(sql, [projectId]);
     }
 }
+
 module.exports = Project;

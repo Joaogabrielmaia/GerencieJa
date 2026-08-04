@@ -2,15 +2,19 @@ const Task = require('../models/Task');
 const Project = require('../models/Project');
 const Sprint = require('../models/Sprint');
 const TeamMember = require('../models/TeamMember');
+
 exports.index = async (req, res) => {
     try {
         const projectId = req.query.project_id || '';
         const sprintId = req.query.sprint_id || '';
         const search = (req.query.search || '').trim();
+
         const tasks = await Task.getAll(projectId, sprintId, search);
         const projects = await Project.getAll();
         const sprints = projectId ? await Sprint.getAll(projectId) : await Sprint.getAll();
         const teamMembers = await TeamMember.getAll();
+
+        // Organizar tarefas por coluna do Kanban (suportando PT-BR e EN)
         const columns = {
             'Backlog': tasks.filter(t => t.status === 'Backlog'),
             'To Do': tasks.filter(t => t.status === 'To Do' || t.status === 'A Fazer'),
@@ -18,6 +22,7 @@ exports.index = async (req, res) => {
             'Review': tasks.filter(t => t.status === 'Review' || t.status === 'Em Revisão'),
             'Done': tasks.filter(t => t.status === 'Done' || t.status === 'Concluído')
         };
+
         res.render('pages/kanban', {
             title: 'Kanban',
             activePage: 'kanban',
@@ -35,13 +40,16 @@ exports.index = async (req, res) => {
         res.status(500).render('pages/error', { message: 'Erro ao carregar o quadro Kanban.', activePage: 'kanban' });
     }
 };
+
 exports.moveTask = async (req, res) => {
     try {
         const { taskId, newStatus } = req.body;
         const numId = parseInt(taskId);
+
         if (isNaN(numId) || numId <= 0 || !newStatus) {
             return res.status(400).json({ success: false, message: 'ID da tarefa e novo status são obrigatórios.' });
         }
+
         const updated = await Task.updateStatus(numId, newStatus);
         if (updated) {
             return res.json({ success: true, message: `Tarefa movida para ${newStatus} com sucesso!` });
@@ -52,17 +60,21 @@ exports.moveTask = async (req, res) => {
         res.status(500).json({ success: false, message: 'Erro interno ao salvar movimento no SQLite.' });
     }
 };
+
 exports.createTask = async (req, res) => {
     try {
         let { project_id, sprint_id, title, description, status, priority, story_points, assignee_id } = req.body;
         title = (title || '').trim();
+
         if (!project_id || !title) {
             if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
                 return res.status(400).json({ success: false, message: 'Projeto e Título da tarefa são obrigatórios.' });
             }
             return res.status(400).render('pages/error', { message: 'Projeto e Título da tarefa são obrigatórios.', activePage: 'kanban' });
         }
+
         const taskId = await Task.create({ project_id, sprint_id, title, description, status, priority, story_points, assignee_id });
+
         if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
             return res.json({ success: true, message: 'Tarefa criada com sucesso!', taskId });
         }
@@ -72,6 +84,7 @@ exports.createTask = async (req, res) => {
         res.status(500).render('pages/error', { message: 'Erro ao criar tarefa.', activePage: 'kanban' });
     }
 };
+
 exports.updateTask = async (req, res) => {
     try {
         const { id } = req.params;
@@ -79,9 +92,12 @@ exports.updateTask = async (req, res) => {
         if (isNaN(numId) || numId <= 0) {
             return res.status(400).render('pages/error', { message: 'ID de tarefa inválido.', activePage: 'kanban' });
         }
+
         let { project_id, sprint_id, title, description, status, priority, story_points, assignee_id } = req.body;
         title = (title || '').trim();
+
         await Task.update(numId, { project_id, sprint_id, title, description, status, priority, story_points, assignee_id });
+
         if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
             return res.json({ success: true, message: 'Tarefa atualizada com sucesso!' });
         }
@@ -91,6 +107,7 @@ exports.updateTask = async (req, res) => {
         res.status(500).render('pages/error', { message: 'Erro ao atualizar tarefa.', activePage: 'kanban' });
     }
 };
+
 exports.deleteTask = async (req, res) => {
     try {
         const { id } = req.params;
@@ -98,7 +115,9 @@ exports.deleteTask = async (req, res) => {
         if (isNaN(numId) || numId <= 0) {
             return res.status(400).render('pages/error', { message: 'ID de tarefa inválido.', activePage: 'kanban' });
         }
+
         await Task.delete(numId);
+
         if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
             return res.json({ success: true, message: 'Tarefa excluída com sucesso!' });
         }

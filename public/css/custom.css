@@ -1,3 +1,6 @@
+/* Design System Editorial Monocromático - White Base & High Contrast Black */
+
+/* Custom Scrollbars */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -12,6 +15,8 @@
 ::-webkit-scrollbar-thumb:hover {
     background: #A1A1AA;
 }
+
+/* Floating White Card Style */
 .card-saas {
     background-color: #FFFFFF;
     border: 1px solid rgba(228, 228, 231, 0.9);
@@ -19,11 +24,14 @@
     box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
     transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
 }
+
 .card-saas:hover {
     border-color: #A1A1AA;
     box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08), 0 8px 12px -4px rgba(0, 0, 0, 0.03);
     transform: translateY(-2px);
 }
+
+/* Clean Form Controls */
 input, select, textarea {
     background-color: #FFFFFF !important;
     border-color: #E4E4E7 !important;
@@ -31,19 +39,25 @@ input, select, textarea {
     border-radius: 0.75rem !important;
     transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
 }
+
 input:focus, select:focus, textarea:focus {
     border-color: #09090B !important;
     box-shadow: 0 0 0 2px rgba(9, 9, 11, 0.1) !important;
     outline: none !important;
 }
+
+/* Input Placeholder */
 ::placeholder {
     color: #A1A1AA !important;
 }
+
+/* Skeleton Loading Animation */
 .skeleton {
     background: linear-gradient(90deg, #F4F4F5 25%, #E4E4E7 50%, #F4F4F5 75%);
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s infinite;
 }
+
 @keyframes skeleton-loading {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
