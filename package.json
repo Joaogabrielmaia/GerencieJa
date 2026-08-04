@@ -1,7 +1,7 @@
 {
   "name": "gerencieja",
   "version": "1.0.0",
-  "description": "GerêncieJá Enterprise - Sistema de gerenciamento de projetos e ciclóis ágeis",
+  "description": "GerêncieJá Enterprise - Sistema de gerenciamento de projetos e ciclos ágeis",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
@@ -9,8 +9,8 @@
     "dev": "node --watch server.js"
   },
   "engines": {
-  "node": "20.x"
-},
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "ejs": "^3.1.10",
     "express": "^4.19.2",

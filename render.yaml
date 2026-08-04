@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: gerencieja
+    env: node
+    plan: free
+    buildCommand: npm install && npm rebuild sqlite3
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.10.0

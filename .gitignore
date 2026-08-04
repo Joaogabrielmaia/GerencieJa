@@ -1,17 +1,30 @@
-# Node.js dependencies
+# Node.js Dependencies
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
-# Environment & local secrets
+# Environment Variables & Secrets
 .env
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Operating System files
+# Operating System & IDE Files
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
 
-# Production database (Optional: keep local SQLite uncommitted)
+# SQLite Local Databases & Logs
 database/*.sqlite
+database/*.sqlite-journal
 !database/.gitkeep
+*.log
